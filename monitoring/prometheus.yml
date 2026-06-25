@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s              # как часто собирать метрики (каждые 5 секунд)
+
+scrape_configs:
+  - job_name: triton               # имя источника метрик
+    static_configs:
+      - targets: ["triton:8002"]   # откуда скрести: сервис 'triton', порт метрик 8002 (имя из docker-сети)

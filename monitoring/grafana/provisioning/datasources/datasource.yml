@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus              # имя источника в Grafana
+    uid: prometheus              # фикс. uid, чтобы дашборд мог на него ссылаться
+    type: prometheus             # тип источника
+    access: proxy                # Grafana сама ходит в Prometheus (не браузер клиента)
+    url: http://prometheus:9090  # адрес Prometheus внутри docker-сети (имя сервиса)
+    isDefault: true              # источник по умолчанию

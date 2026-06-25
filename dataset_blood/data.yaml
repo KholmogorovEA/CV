@@ -1,0 +1,11 @@
+path: C:\Users\bykho\OneDrive\Desktop\yolo_trenirovka\dataset_blood
+train: train/images
+val: valid/images
+test: test/images
+
+nc: 3
+
+names:
+  0: Platelets        #тромбоциты 
+  1: RBC             #эритроциты (красные)
+  2: WBC             #лейкоциты (белые)

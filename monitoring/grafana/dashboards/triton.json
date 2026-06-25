@@ -1,0 +1,61 @@
+{
+  "title": "Triton — Blood Detector",
+  "uid": "triton-blood",
+  "schemaVersion": 39,
+  "time": { "from": "now-15m", "to": "now" },
+  "refresh": "5s",
+  "panels": [
+    {
+      "title": "Throughput (req/s)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(nv_inference_request_success[1m]))",
+          "legendFormat": "requests/s"
+        }
+      ]
+    },
+    {
+      "title": "Inference latency (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(nv_inference_compute_infer_duration_us[1m])) / sum(rate(nv_inference_request_success[1m])) / 1000",
+          "legendFormat": "compute ms/req"
+        }
+      ]
+    },
+    {
+      "title": "Queue time (ms)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(nv_inference_queue_duration_us[1m])) / sum(rate(nv_inference_request_success[1m])) / 1000",
+          "legendFormat": "queue ms/req"
+        }
+      ]
+    },
+    {
+      "title": "GPU utilization (%)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "nv_gpu_utilization * 100",
+          "legendFormat": "GPU {{gpu_uuid}}"
+        }
+      ]
+    }
+  ]
+}

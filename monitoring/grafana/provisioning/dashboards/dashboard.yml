@@ -1,0 +1,7 @@
+apiVersion: 1
+
+providers:
+  - name: default                          # провайдер дашбордов
+    type: file                             # грузим из файлов
+    options:
+      path: /var/lib/grafana/dashboards    # папка внутри контейнера, где лежат json-дашборды
