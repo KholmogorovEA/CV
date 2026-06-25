@@ -1,7 +1,6 @@
 services:
   trt-builder:
-    image: nvcr.io/nvidia/tritonserver:26.05-py3   # trtexec уже внутри образа -> та же версия TRT, что у triton
-    # собрать engine прямо из end2end ONNX (NMS встроен; trtexec парсит его сам)
+    image: nvcr.io/nvidia/tritonserver:26.05-py3  
     command:
       - /usr/src/tensorrt/bin/trtexec
       - --onnx=/models/detect_blood/1/model.onnx
@@ -11,67 +10,66 @@ services:
       - --optShapes=images:8x3x640x640
       - --maxShapes=images:16x3x640x640
     volumes:
-      - ./triton/models:/models                  # репозиторий моделей: читает onnx, пишет plan
+      - ./triton/models:/models               
     deploy:
       resources:
         reservations:
           devices:
-            - driver: nvidia                       # GPU нужен для сборки engine
+            - driver: nvidia                     
               device_ids: ["0"]
               capabilities: [gpu]
-    restart: "no"                                  # одноразовый: собрал план и вышел
+    restart: "no"                              
 
  
   triton:
-    image: nvcr.io/nvidia/tritonserver:26.05-py3   # образ Triton (TRT 10.16.1, поддержка Blackwell)
-    container_name: triton                         # фикс. имя контейнера
-    # tritonserver: репозиторий моделей + poll-режим (подхват изменений без рестарта)
+    image: nvcr.io/nvidia/tritonserver:26.05-py3   
+    container_name: triton                     
     command:
       - tritonserver
       - --model-repository=/models
       - --model-control-mode=poll
       - --repository-poll-secs=5
     ports:
-      - "8000:8000"                                # HTTP/REST
-      - "8001:8001"                                # gRPC
-      - "8002:8002"                                # /metrics для Prometheus
+      - "8000:8000"                                
+      - "8001:8001"                              
+      - "8002:8002"                         
     volumes:
-      - ./triton/models:/models                    # проброс репозитория моделей (хост:контейнер)
-    shm_size: "1gb"                                # shared memory: дефолтных 64МБ Triton'у мало
+      - ./triton/models:/models                 
+    shm_size: "1gb"                            
     depends_on:
       trt-builder:
-        condition: service_completed_successfully  # стартовать ТОЛЬКО после успешной сборки плана
+        condition: service_completed_successfully 
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              device_ids: ["0"]                    # CUDA-индекс карты (проверь nvidia-smi какой это GPU)
+              device_ids: ["0"]                 
               capabilities: [gpu]
     restart: unless-stopped
 
   
   prometheus:
-    image: prom/prometheus:latest                  # официальный образ Prometheus
+    image: prom/prometheus:latest              
     container_name: prometheus
     ports:
-      - "9090:9090"                                # веб-интерфейс Prometheus
+      - "9090:9090"                              
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml  # наш конфиг скрейпа
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml 
     depends_on:
-      - triton                                     # есть смысл стартовать после сервера метрик
+      - triton                                     
     restart: unless-stopped
 
   
   grafana:
-    image: grafana/grafana:latest                  # официальный образ Grafana
+    image: grafana/grafana:latest                 
     container_name: grafana
     ports:
-      - "3000:3000"                                # веб-интерфейс Grafana (admin/admin)
+      - "3000:3000"                                
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin           # пароль админа (логин admin)
+      - GF_SECURITY_ADMIN_PASSWORD=admin           
     volumes:
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning  # авто-настройка datasource + провайдера дашбордов
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning  
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards  # сами json-дашборды
     depends_on:
       - prometheus                                 # источник данных должен быть готов
